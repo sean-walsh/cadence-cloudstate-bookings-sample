@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package flightservice;
+option java_package = "flightservice";
+
+message ReserveFlightCommand {
+    string reservationId = 1;
+    string userId = 2;
+    string flightNumber = 3;
+}
+
+message CancelFlightReservationCommand {
+    string reservationId = 1;
+}
+
+message FlightReservation {
+    string reservationId = 1;
+    string userId = 2;
+    string flightNumber = 3;
+    bool cancelled = 4;
+}
+
+message GetFlightReservationCommand {
+    string reservationId = 1;
+}
+
+service FlightBookingService {
+    rpc ReserveFlight(ReserveFlightCommand) returns (google.protobuf.Empty);
+
+    rpc CancelFlightReservation(CancelFlightReservationCommand) returns (google.protobuf.Empty);
+
+    rpc GetFlightReservation(GetFlightReservationCommand) returns (FlightReservation);
+}

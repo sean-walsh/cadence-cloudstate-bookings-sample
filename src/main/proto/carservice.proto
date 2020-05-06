@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package carservice;
+option java_package = "carservice";
+
+message ReserveCarCommand {
+    string reservationId = 1;
+    string userId = 2;
+    string company = 3;
+    string carType = 4;
+}
+
+message CancelCarReservationCommand {
+    string reservationId = 1;
+}
+
+message CarReservation {
+    string reservationId = 1;
+    string userId = 2;
+    string company = 3;
+    string carType = 4;
+    bool cancelled = 5;
+}
+
+message GetCarReservationCommand {
+    string reservationId = 1;
+}
+
+service CarBookingService {
+    rpc ReserveCar(ReserveCarCommand) returns (google.protobuf.Empty);
+
+    rpc CancelCarReservation(CancelCarReservationCommand) returns (google.protobuf.Empty);
+
+    rpc GetCarReservation(GetCarReservationCommand) returns (CarReservation);
+}
