@@ -21,44 +21,55 @@ import carservice.Carservice.*;
 import flightservice.Flightservice.*;
 import hotelservice.Hotelservice.*;
 
-import static com.uber.cadence.samples.bookingsaga.TripBookingSaga.*;
-
 public class TripBookingActivitiesImpl implements TripBookingActivities {
-  @Override
-  public String reserveCar(ReserveCarCommand reserveCarCommand) {
-    System.out.println("reserve car for '" + reserveCarCommand.getUserId() + "'");
-    carBookingServiceClient.reserveCar(reserveCarCommand);
-    return reserveCarCommand.getReservationId();
-  }
 
-  @Override
-  public String reserveFlight(ReserveFlightCommand reserveFlightCommand) {
-    System.out.println("failing to book flight for '" + reserveFlightCommand.getUserId() + "'");
-    throw new RuntimeException("Flight booking did not work");
-  }
+    private final CarBookingServiceClient carBookingServiceClient;
+    private final HotelBookingServiceClient hotelBookingServiceClient;
+    private final FlightBookingServiceClient flightBookingServiceClient;
 
-  @Override
-  public String reserveHotel(ReserveHotelCommand reserveHotelCommand) {
-    System.out.println("booking hotel for '" + reserveHotelCommand.getUserId() + "'");
-    hotelBookingServiceClient.reserveHotel(reserveHotelCommand);
-    return reserveHotelCommand.getReservationId();
-  }
+    public TripBookingActivitiesImpl(CarBookingServiceClient carBookingServiceClient,
+                                     HotelBookingServiceClient hotelBookingServiceClient,
+                                     FlightBookingServiceClient flightBookingServiceClient) {
+        this.carBookingServiceClient = carBookingServiceClient;
+        this.hotelBookingServiceClient = hotelBookingServiceClient;
+        this.flightBookingServiceClient = flightBookingServiceClient;
+    }
 
-  @Override
-  public String cancelFlight(CancelFlightReservationCommand cancelFlightReservationCommand) {
-    System.out.println("cancelling flight reservation '" + cancelFlightReservationCommand.getReservationId() + "'");
-    return "";
-  }
+    @Override
+    public String reserveCar(ReserveCarCommand reserveCarCommand) {
+        System.out.println("reserve car for '" + reserveCarCommand.getUserId() + "'");
+        carBookingServiceClient.reserveCar(reserveCarCommand);
+        return reserveCarCommand.getReservationId();
+    }
 
-  @Override
-  public String cancelHotel(CancelHotelReservationCommand cancelHotelReservationCommand) {
-    System.out.println("cancelling hotel reservation '" + cancelHotelReservationCommand.getReservationId() + "'");
-    return cancelHotelReservationCommand.getReservationId();
-  }
+    @Override
+    public String reserveFlight(ReserveFlightCommand reserveFlightCommand) {
+        System.out.println("failing to book flight for '" + reserveFlightCommand.getUserId() + "'");
+        throw new RuntimeException("Flight booking did not work");
+    }
 
-  @Override
-  public String cancelCar(CancelCarReservationCommand cancelCarReservationCommand) {
-    System.out.println("cancelling car reservation '" + cancelCarReservationCommand.getReservationId() + "'");
-    return cancelCarReservationCommand.getReservationId();
-  }
+    @Override
+    public String reserveHotel(ReserveHotelCommand reserveHotelCommand) {
+        System.out.println("booking hotel for '" + reserveHotelCommand.getUserId() + "'");
+        hotelBookingServiceClient.reserveHotel(reserveHotelCommand);
+        return reserveHotelCommand.getReservationId();
+    }
+
+    @Override
+    public String cancelFlight(CancelFlightReservationCommand cancelFlightReservationCommand) {
+        System.out.println("cancelling flight reservation '" + cancelFlightReservationCommand.getReservationId() + "'");
+        return "";
+    }
+
+    @Override
+    public String cancelHotel(CancelHotelReservationCommand cancelHotelReservationCommand) {
+        System.out.println("cancelling hotel reservation '" + cancelHotelReservationCommand.getReservationId() + "'");
+        return cancelHotelReservationCommand.getReservationId();
+    }
+
+    @Override
+    public String cancelCar(CancelCarReservationCommand cancelCarReservationCommand) {
+        System.out.println("cancelling car reservation '" + cancelCarReservationCommand.getReservationId() + "'");
+        return cancelCarReservationCommand.getReservationId();
+    }
 }

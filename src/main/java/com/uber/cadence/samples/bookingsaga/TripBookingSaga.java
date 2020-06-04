@@ -17,80 +17,81 @@
 
 package com.uber.cadence.samples.bookingsaga;
 
-import static com.uber.cadence.samples.common.SampleConstants.DOMAIN;
-
 import akka.actor.ActorSystem;
 import akka.grpc.GrpcClientSettings;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
+import carservice.*;
+import carservice.Carservice.*;
 import com.uber.cadence.client.WorkflowClient;
 import com.uber.cadence.client.WorkflowException;
 import com.uber.cadence.worker.Worker;
-import carservice.*;
-import carservice.Carservice.*;
-import hotelservice.*;
-import hotelservice.Hotelservice.*;
 import flightservice.*;
 import flightservice.Flightservice.*;
+import hotelservice.*;
+import hotelservice.Hotelservice.*;
 
 import java.util.UUID;
 
+import static com.uber.cadence.samples.common.SampleConstants.DOMAIN;
+
 public class TripBookingSaga {
 
-  static final String TASK_LIST = "TripBooking";
+    static final String TASK_LIST = "TripBooking";
 
-  private static final ActorSystem system = ActorSystem.create("BookingsServiceClient");
-  private static final Materializer materializer = ActorMaterializer.create(system);
-  // NOTE: The cloudstate bookings ip/port are subject to change.
-  private static final GrpcClientSettings settings = GrpcClientSettings.connectToServiceAt("192.168.99.117", 31923, system);
-  static final CarBookingServiceClient carBookingServiceClient = CarBookingServiceClient.create(settings, materializer, system.dispatcher());
-  static final HotelBookingServiceClient hotelBookingServiceClient = HotelBookingServiceClient.create(settings, materializer, system.dispatcher());
-  static final FlightBookingServiceClient flightBookingServiceClient = FlightBookingServiceClient.create(settings, materializer, system.dispatcher());
+    private static final ActorSystem system = ActorSystem.create("BookingsServiceClient");
+    private static final Materializer materializer = ActorMaterializer.create(system);
+    // NOTE: The cloudstate bookings ip/port are subject to change.
 
-  @SuppressWarnings("CatchAndPrintStackTrace")
-  public static void main(String[] args) {
-    // Get worker to poll the common task list.
-    Worker.Factory factory = new Worker.Factory(DOMAIN);
-    final Worker workerForCommonTaskList = factory.newWorker(TASK_LIST);
-    workerForCommonTaskList.registerWorkflowImplementationTypes(TripBookingWorkflowImpl.class);
-    TripBookingActivities tripBookingActivities = new TripBookingActivitiesImpl();
-    workerForCommonTaskList.registerActivitiesImplementations(tripBookingActivities);
+    @SuppressWarnings("CatchAndPrintStackTrace")
+    public static void main(String[] args) {
+        // Get worker to poll the common task list.
+        Worker.Factory factory = new Worker.Factory(DOMAIN);
+        final Worker workerForCommonTaskList = factory.newWorker(TASK_LIST);
+        workerForCommonTaskList.registerWorkflowImplementationTypes(TripBookingWorkflowImpl.class);
+        GrpcClientSettings settings = GrpcClientSettings.connectToServiceAt("192.168.99.117", 31923, system);
+        CarBookingServiceClient carBookingServiceClient = CarBookingServiceClient.create(settings, materializer, system.dispatcher());
+        HotelBookingServiceClient hotelBookingServiceClient = HotelBookingServiceClient.create(settings, materializer, system.dispatcher());
+        FlightBookingServiceClient flightBookingServiceClient = FlightBookingServiceClient.create(settings, materializer, system.dispatcher());
+        TripBookingActivities tripBookingActivities = new TripBookingActivitiesImpl(
+                carBookingServiceClient, hotelBookingServiceClient, flightBookingServiceClient);
+        workerForCommonTaskList.registerActivitiesImplementations(tripBookingActivities);
 
-    // Start all workers created by this factory.
-    factory.start();
-    System.out.println("Worker started for task list: " + TASK_LIST);
+        // Start all workers created by this factory.
+        factory.start();
+        System.out.println("Worker started for task list: " + TASK_LIST);
 
-    WorkflowClient workflowClient = WorkflowClient.newInstance(DOMAIN);
+        WorkflowClient workflowClient = WorkflowClient.newInstance(DOMAIN);
 
-    // now we can start running instances of our saga - its state will be persisted
-    TripBookingWorkflow trip1 = workflowClient.newWorkflowStub(TripBookingWorkflow.class);
-    try {
-      ReserveCarCommand reserveCarCommand = Carservice.ReserveCarCommand.newBuilder()
-              .setReservationId(UUID.randomUUID().toString())
-              .setUserId("SeanW")
-              .setCompany("Hertz")
-              .setCarType("midsize")
-              .build();
+        // now we can start running instances of our saga - its state will be persisted
+        TripBookingWorkflow trip1 = workflowClient.newWorkflowStub(TripBookingWorkflow.class);
+        try {
+            ReserveCarCommand reserveCarCommand = Carservice.ReserveCarCommand.newBuilder()
+                    .setReservationId(UUID.randomUUID().toString())
+                    .setUserId("SeanW")
+                    .setCompany("Hertz")
+                    .setCarType("midsize")
+                    .build();
 
-      ReserveHotelCommand reserveHotelCommand = Hotelservice.ReserveHotelCommand.newBuilder()
-              .setReservationId(UUID.randomUUID().toString())
-              .setUserId("SeanW")
-              .setHotel("Marriott")
-              .setRoomNumber("555")
-              .build();
+            ReserveHotelCommand reserveHotelCommand = Hotelservice.ReserveHotelCommand.newBuilder()
+                    .setReservationId(UUID.randomUUID().toString())
+                    .setUserId("SeanW")
+                    .setHotel("Marriott")
+                    .setRoomNumber("555")
+                    .build();
 
-      ReserveFlightCommand reserveFlightCommand = Flightservice.ReserveFlightCommand.newBuilder()
-              .setReservationId(UUID.randomUUID().toString())
-              .setUserId("SeanW")
-              .setFlightNumber("UA977")
-              .build();
+            ReserveFlightCommand reserveFlightCommand = Flightservice.ReserveFlightCommand.newBuilder()
+                    .setReservationId(UUID.randomUUID().toString())
+                    .setUserId("SeanW")
+                    .setFlightNumber("UA977")
+                    .build();
 
-      trip1.bookTrip(reserveCarCommand, reserveHotelCommand, reserveFlightCommand);
-    } catch (WorkflowException e) {
-      // Expected
-      e.printStackTrace();
+            trip1.bookTrip(reserveCarCommand, reserveHotelCommand, reserveFlightCommand);
+        } catch (WorkflowException e) {
+            // Expected
+            e.printStackTrace();
+        }
+
+        System.exit(0);
     }
-
-    System.exit(0);
-  }
 }
